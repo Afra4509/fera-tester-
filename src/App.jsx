@@ -13,6 +13,7 @@ function App() {
   });
 
   const [history, setHistory] = useState([]);
+  const [recentHits, setRecentHits] = useState([]); // <-- NEW STATE FOR LIVE FEED
   const [isConnected, setIsConnected] = useState(false);
 
   // Use refs to keep track of state for the interval without causing re-renders
@@ -56,6 +57,12 @@ function App() {
           
           // Track Active Session
           if (session_id) activeSessions.current.set(session_id, Date.now());
+
+          // Add to Live Feed
+          setRecentHits(prev => {
+            const newHits = [{ time: new Date().toLocaleTimeString(), ip: ip_address, session: session_id.substring(0,8) }, ...prev];
+            return newHits.slice(0, 10); // Keep last 10
+          });
         }
       )
       .subscribe((status) => {
@@ -180,14 +187,32 @@ function App() {
         </ResponsiveContainer>
       </div>
       
-      <div className="glass-panel snippet-section">
-        <h3>Integration Snippet (Serverless)</h3>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-          Add this script to the <code>&lt;head&gt;</code> of the websites you want to monitor. It will directly post to Supabase!
-        </p>
-        <pre>
+      <div className="glass-panel snippet-section" style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+        <div style={{ flex: '1 1 300px' }}>
+          <h3>Integration Snippet (Serverless)</h3>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+            Add this script to the <code>&lt;head&gt;</code> of the websites you want to monitor.
+          </p>
+          <pre>
 {`<script src="/snippet.js"></script>`}
-        </pre>
+          </pre>
+        </div>
+        
+        <div style={{ flex: '1 1 300px' }}>
+          <h3>Live Activity Feed ⚡</h3>
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {recentHits.length === 0 ? (
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Menunggu pengunjung masuk...</p>
+            ) : (
+              recentHits.map((hit, i) => (
+                <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', fontSize: '0.85rem' }}>
+                  <span style={{ color: 'var(--success)' }}>{hit.time}</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>Visitor: {hit.session}...</span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
